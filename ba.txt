@@ -1,0 +1,190 @@
+
+package com.cipher;
+
+import java.io.File;
+import java.io.IOException;
+import java.math.BigInteger;
+import java.util.HashSet;
+import java.util.Iterator;
+import java.util.Set;
+import java.util.concurrent.ThreadLocalRandom;
+import javax.swing.JOptionPane;
+
+
+public class Rsa {
+ File file ;   
+ int P,N,Q,H0,Fi,Euler,D;
+ String HashCode,decipherToGo,HashToGo,CipherTogo;
+ static Set<Integer> s = new  HashSet<Integer>();
+  Rsa(String P, String Q, String H0,String HC,boolean b) throws InterruptedException, IOException{
+      this.P=Integer.valueOf(P);
+      this.Q= Integer.valueOf(Q);
+      if ((isPrime(this.P))&&(isPrime(this.Q))){
+      this.HashCode=HC;
+      this.H0=Integer.valueOf(H0);
+      this.N=this.P*this.Q;
+      this.Fi=(this.P-1)*(this.Q-1);
+      this.Euler=Integer.valueOf(getElementG());
+      this.D=ModInverse(Euler,Fi);
+      this.HashToGo= getFullIn();
+      if (b){//decription 
+         //StringBuilder CipherTex= new StringBuilder() ;
+         file = new File("/home/ziad/workspace/NetBeans/Com.Cipher/ziad");
+         if (file==null)
+         JOptionPane.showMessageDialog(null, "File Npt Found "); 
+         else
+         //CipherTex = ComCipher.GetMeString2(file);
+         this.CipherTogo=(ComCipher.GetMeString2(file)).toString();
+         BinaryToString bts = new BinaryToString();
+         int[] M = bts.getinteger(CipherTogo);//CipherTex.toString());
+         decipherToGo=geDecipher(M); 
+      }else{//encryption 
+         this.CipherTogo=goCipher();
+          ComCipher.write(CipherTogo);
+      }
+      
+      }else{
+          JOptionPane.showMessageDialog(null, "P or Q has to be >1 and primitive ");
+      }
+  }
+  
+  
+     private String getFullIn(){
+         String s = new String();
+         char c ;
+         for (int i =0;i<HashCode.length();i++){
+             if (Character.isDigit(HashCode.charAt(i))){
+                s+=HashCode.charAt(i); 
+             }else{
+                s+=String.valueOf(((int)(HashCode.charAt(i))));
+             }
+                 
+         }
+        
+         return s;
+     }
+     static int ModInverse(int a,int prime){
+         a=a%prime;
+         for (int x=1;x<=prime ;x++){
+             if ((a*x) % prime == 1)
+                 return x;
+         }
+         return -1;
+     }  
+     public static boolean isPrime(int n){
+      for(int i=2;i<n;i++) {
+	        if(n%i==0)
+	            return false;
+	    }
+	    return true;
+	}
+     
+     
+      public static void findprimefactors (int n ){
+        while(n%2 ==0){
+            s.add(2);
+            n=n/2;
+        }
+        for (int i=3;i<=n;i=i+2){
+            
+            while(n%i==0){
+                s.add(i);
+                n=n/i;
+            }
+        }
+        if(n>2){
+            s.add(n);
+        }
+          
+    }   
+  
+  public static String findprimitive(int n ){
+        
+//        if (isPrime(n)==false){
+//            return String.valueOf(-1);
+//        }
+        int [] roots = new int[n-1];
+        int counter =0;
+        int phi =n-1;
+        findprimefactors(phi);
+        
+        for(long r=2;r<=phi;r++){
+            boolean flag = false ;
+            Iterator<Integer> iterator = s.iterator();
+            BigInteger rbi = BigInteger.valueOf(r);
+           
+            for(;iterator.hasNext(); ){
+                long sl=iterator.next();
+             if(rbi.modPow(BigInteger.valueOf(phi/sl), BigInteger.valueOf(n)).longValue()==1){
+                flag =true;
+                break;
+             }  
+                
+            }
+         if (flag== false){
+           if (n%r!=0){  
+           roots[counter]=(int)r;
+           counter++;}
+         }
+         //return String.valueOf((int)r);
+        } if (roots.length!=0){
+         int [] res = new int[counter];
+        System.arraycopy(roots, 0, res, 0, counter);
+            String gkey = "{ ";
+            for (int i =0;i<res.length-1;i++){
+               gkey+=String.valueOf(res[i])+","; 
+            }gkey+=String.valueOf(res[res.length-1])+" }";
+           return gkey;
+        }
+
+        //if no primitive root found         
+        return String.valueOf(-1);
+    }
+
+private String getElementG() throws InterruptedException {
+     GkeyFrame G = new GkeyFrame();
+     G.setVisible(true);
+ 
+     String S = findprimitive(this.Fi);
+     G.jTextArea1.append(S);
+     
+      
+     String Getmyg=G.nationel; 
+     while (Getmyg==null){
+       Thread.sleep(ThreadLocalRandom.current().nextInt(1000,5000));
+       Getmyg=G.nationel;
+     }
+     
+     return Getmyg;
+      
+        
+    }  
+
+    private String goCipher() {
+        String Result =new String();
+        String curr ;
+        for (int i =0;i<HashToGo.length();i++){
+            curr = new String();
+            curr+= HashToGo.charAt(i);
+            if (i!=HashToGo.length()-1)
+            Result+= BigInteger.valueOf(Integer.parseInt(curr)).pow(Euler).mod(BigInteger.valueOf(N))+" ";
+            else
+            Result+= BigInteger.valueOf(Integer.parseInt(curr)).pow(Euler).mod(BigInteger.valueOf(N));
+            //CipherTogo+=BigInteger.valueOf(Integer.parseInt(curr)).pow(Euler).mod(BigInteger.valueOf(N));
+        }
+        return Result;
+    }
+
+    private String geDecipher(int[] CipherTex) {
+    String res = new String();
+    int r,c;
+    for (int i =0;i<CipherTex.length;i++){
+        c=CipherTex[i];
+        r= (BigInteger.valueOf(c).pow(this.D).mod(BigInteger.valueOf(this.N))).intValue();
+        res+=String.valueOf(r);
+    }
+    
+        return res;
+    }
+}
+
