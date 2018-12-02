@@ -5,20 +5,23 @@
  */
 package com.cipher;
 
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.lang.reflect.Array;
+import java.util.Arrays;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 public class Idea {
 
 private static final int     rounds = 8;         // number of rounds
 
 private final int[]          subKey;             // internal encryption sub-keys
 
-/**
-* Creates an instance of the IDEA processor, initialized with a 16-byte binary key.
-*
-* @param key
-*    A 16-byte binary key.
-* @param encrypt
-*    true to encrypt, false to decrypt.
-*/
+
 public Idea (byte[] key, boolean encrypt) {
    int[] tempSubKey = expandUserKey(key);
    if (encrypt) {
@@ -26,34 +29,14 @@ public Idea (byte[] key, boolean encrypt) {
     else {
       subKey = invertSubKey(tempSubKey); }}
 
-/**
-* Creates an instance of the IDEA processor, initialized with a character string key.
-*
-* @param charKey
-*    A string of ASCII characters within the range 0x21 .. 0x7E.
-* @param encrypt
-*    true to encrypt, false to decrypt.
-*/
-public Idea (String charKey, boolean encrypt) {
+
+public Idea (String charKey, boolean encrypt) throws FileNotFoundException, IOException {
    this(generateUserKeyFromCharKey(charKey), encrypt); }
 
-/**
-* Encrypts or decrypts a block of 8 data bytes.
-*
-* @param data
-*    Buffer containing the 8 data bytes to be encrypted/decrypted.
-*/
+
 public void crypt (byte[] data) {
    crypt(data, 0); }
 
-/**
-* Encrypts or decrypts a block of 8 data bytes.
-*
-* @param data
-*    Data buffer containing the bytes to be encrypted/decrypted.
-* @param dataPos
-*    Start position of the 8 bytes within the buffer.
-*/
 public void crypt (byte[] data, int dataPos) {
    int x0 = ((data[dataPos + 0] & 0xFF) << 8) | (data[dataPos + 1] & 0xFF);
    int x1 = ((data[dataPos + 2] & 0xFF) << 8) | (data[dataPos + 3] & 0xFF);
@@ -165,24 +148,37 @@ private static int[] expandUserKey (byte[] userKey) {
 
 // Generates a 16-byte binary user key from a character string key.
 // The characters within the string must be within the range 0x21 .. 0x7E.
-private static byte[] generateUserKeyFromCharKey (String charKey) {
-   final int minChar = 0x21;
-   final int maxChar = 0x7E;
-   final int nofChar = maxChar - minChar + 1;    // Number of different valid characters
-   int[] a = new int[8];
-   for (int p = 0; p < charKey.length(); p++) {
-      int c = charKey.charAt(p);
-      if (c < minChar || c > maxChar) {
-         throw new IllegalArgumentException("Wrong character in key string."); }
-      int val = c - minChar;
-      for (int i = a.length - 1; i >= 0; i--) {
-         val += a[i] * nofChar;
-         a[i] = val & 0xFFFF;
-         val >>= 16; }}
-   byte[] key = new byte[16];
-   for (int i = 0; i < 8; i++) {
-      key[i * 2] = (byte)(a[i] >> 8);
-      key[i * 2 + 1] = (byte)a[i]; }
-   return key; }
+private static byte[] generateUserKeyFromCharKey (String charKey) throws FileNotFoundException, IOException {
+//   final int minChar = 0x21;
+//   final int maxChar = 0x7E;
+//   final int nofChar = maxChar - minChar + 1;    // Number of different valid characters
+//   int[] a = new int[8];
+//   for (int p = 0; p < charKey.length(); p++) {
+//      int c = charKey.charAt(p);
+//      if (c < minChar || c > maxChar) {
+//         throw new IllegalArgumentException("Wrong character in key string."); }
+//      int val = c - minChar;
+//      for (int i = a.length - 1; i >= 0; i--) {
+//         val += a[i] * nofChar;
+//         a[i] = val & 0xFFFF;
+//         val >>= 16; }}
+//   byte[] key = new byte[16];
+//   for (int i = 0; i < 8; i++) {
+//      key[i * 2] = (byte)(a[i] >> 8);
+//      key[i * 2 + 1] = (byte)a[i]; }
+//   return key; }
+
+    byte[] key;
+  File file = new File("/home/ziad/TestFile/key");
+  //init array with file length
+  byte[] bytesArray = new byte[(int) file.length()]; 
+
+  FileInputStream fis = new FileInputStream(file);
+  fis.read(bytesArray); //read file into bytes[]
+  fis.close();
+  key = Arrays.copyOf(bytesArray, 16);
+  
+  return key;
+}
 
 }
