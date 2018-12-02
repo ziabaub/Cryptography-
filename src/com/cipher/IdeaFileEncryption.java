@@ -14,34 +14,18 @@ import java.util.Arrays;
 
 
 public class IdeaFileEncryption {
-
+private final static char[] hexArray = "0123456789ABCDEF".toCharArray();
 private static final int     blockSize = 8;
 
 
-public enum Mode {
-   ECB,
-   CBC};
 
-/**
-* Encrypts or decrypts a file.
-*
-* @param inputFileName
-*    Name of the input file.
-* @param outputFileName
-*    Name of the output file.
-* @param charKey
-*    The encryption key. A string of ASCII characters within the range 0x21 .. 0x7E.
-* @param encrypt
-*    true to encrypt, false to decrypt.
-* @param mode
-*    Mode of operation.
-*/
-public static void cryptFile (String inputFileName, String outputFileName, String charKey, boolean encrypt, Mode mode) throws IOException {
+
+public  void cryptFile (String inputFileName, String outputFileName, String charKey, boolean encrypt) throws IOException {
    FileChannel inChannel = null;
    FileChannel outChannel = null;
    try {
       Idea idea = new Idea(charKey, encrypt);
-      BlockStreamCrypter bsc = new BlockStreamCrypter(idea, encrypt, mode);
+      BlockStreamCrypter bsc = new BlockStreamCrypter(idea, encrypt);
       inChannel = FileChannel.open(Paths.get(inputFileName), StandardOpenOption.READ);
       long inFileSize = inChannel.size();
       long inDataLen;
@@ -76,33 +60,16 @@ public static void cryptFile (String inputFileName, String outputFileName, Strin
 private static class BlockStreamCrypter {
    Idea            idea;
    boolean         encrypt;
-   Mode            mode;
    byte[]          prev;                         // data of the previous ciphertext block
    byte[]          newPrev;
-   BlockStreamCrypter (Idea idea, boolean encrypt, Mode mode) {
+   BlockStreamCrypter (Idea idea, boolean encrypt) {
       this.idea = idea;
       this.encrypt = encrypt;
-      this.mode = mode;
       prev = new byte[blockSize];
       newPrev = new byte[blockSize]; }
    void crypt (byte[] data, int pos) {
-      switch (mode) {
-         case ECB: {
             idea.crypt(data, pos);
-            break; }
-         case CBC: {
-            if (encrypt) {
-               xor(data, pos, prev);
-               idea.crypt(data, pos);
-               System.arraycopy(data, pos, prev, 0, blockSize); }
-             else {
-               System.arraycopy(data, pos, newPrev, 0, blockSize);
-               idea.crypt(data, pos);
-               xor(data, pos, prev);
-               byte[] temp = prev;
-               prev = newPrev;
-               newPrev = temp; }
-            break; }}}}
+}}
 
 private static void pumpData(FileChannel inChannel, long inDataLen, FileChannel outChannel, long outDataLen, BlockStreamCrypter bsc) throws IOException {
    final int bufSize = 0x200000;
@@ -124,10 +91,25 @@ private static void pumpData(FileChannel inChannel, long inDataLen, FileChannel 
       buf.position(0);
       buf.limit(reqLen);
       trLen = outChannel.write(buf);
+      String cipher = bytesToHex(buf);
+      ComCipher.write(cipher);
       if (trLen != reqLen) {
          throw new IOException("Incomplete data chunk written to file."); }
       filePos += chunkLen; }}
 
+
+public static String bytesToHex(ByteBuffer byt) {
+    byte[] bytes = byt.array();
+   // byt.get(bytes, 0, bytes.length);
+    char[] hexChars = new char[bytes.length *2];
+    for ( int j = 0; j < bytes.length; j++ ) {
+        int v = bytes[j] & 0xFF;
+        hexChars[j * 2] = hexArray[v >>> 4];
+        hexChars[j * 2 + 1] = hexArray[v & 0x0F];
+    }
+     char[] temp = Arrays.copyOf(hexChars, 10000);
+    return new String(temp);
+}
 private static long readDataLength (FileChannel channel, BlockStreamCrypter bsc) throws IOException {
    ByteBuffer buf = ByteBuffer.allocate(blockSize);
    int trLen = channel.read(buf);
@@ -138,7 +120,7 @@ private static long readDataLength (FileChannel channel, BlockStreamCrypter bsc)
    return unpackDataLength(a); }
 
 private static void writeDataLength (FileChannel channel, long dataLength, BlockStreamCrypter bsc) throws IOException {
-   byte[] a = packDataLength(dataLength);
+   byte[] a = packDataLength(dataLength);  
    bsc.crypt(a, 0);
    ByteBuffer buf = ByteBuffer.wrap(a);
    int trLen = channel.write(buf);
