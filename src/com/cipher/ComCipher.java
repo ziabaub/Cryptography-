@@ -69,7 +69,7 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
         StringBuilder MyText,MyTextWithAllContent;
         BufferedImage im = null;
         Slider slstrength;
-        RadioButton r1,r2,r3,r4,r5,r6;
+        RadioButton r1,r2,r3,r4,r5,r6,r7;
         Group Method2;
         TextField keyso,P,K,X,Pi,Q,H0,N,F,E,D,Ei;
         TextArea DeCipherT,CipherT,symt;
@@ -78,6 +78,7 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
         Item i1,i2,i3,i4,i5;
         Rsa R;
         byte[] array;
+        IdeaFileEncryption IEF; 
        // ObservableList<Item> data =FXCollections.observableArrayList();   
         @Override
         public void start(Stage primaryStage) {
@@ -133,7 +134,7 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
              r4 = new RadioButton();
              r5 = new RadioButton();
              r6 = new RadioButton();
-             
+             r7 = new RadioButton();
              
             ToggleGroup tb = new ToggleGroup();
             tb.getToggles().addAll(r1,r2,r3,r4,r5,r6);
@@ -179,6 +180,7 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
             Label lb4 = new Label("Stream Cipher");
             Label lb5 = new Label("El Gamal Cipher");
             Label lb6 = new Label("RSA Cipher       ");
+            Label lb7 = new Label("Idea             ");
             
             HBox hb1 = new HBox(15);
             HBox hb2 = new HBox(15);
@@ -191,6 +193,8 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
             HBox hb6Content2 = new HBox(4);
             HBox hb6Content3 = new HBox(4);
             HBox hb6Content4 = new HBox(4);
+            HBox hb7 = new HBox(15);
+             
             
             hb1.getChildren().addAll(r1,lb1);
             hb2.getChildren().addAll(r2,lb2);
@@ -203,9 +207,10 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
             hb6Content3.getChildren().addAll(lbH0,H0);
             hb6Content4.getChildren().addAll(lbEi,Ei);
             hb6.getChildren().addAll(r6,lb6);
+            hb7.getChildren().addAll(r7,lb7);
             
            VBox vbchoosentype =new VBox(3);
-           vbchoosentype.getChildren().addAll(hb1,hb2,hb3,hb4,hb5,hb6,hb6Content1,hb6Content2,hb6Content3,hb6Content4);
+           vbchoosentype.getChildren().addAll(hb1,hb2,hb3,hb4,hb7,hb5,hb6,hb6Content1,hb6Content2,hb6Content3,hb6Content4);
            vbchoosentype.setLayoutY(277);
            vbchoosentype.setLayoutX(10);
            
@@ -216,7 +221,7 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
            HBox EDButtons = new HBox(10);
            EDButtons.getChildren().addAll(Decr,Encr,keyso);
            EDButtons.setLayoutX(5);
-           EDButtons.setLayoutY(540);
+           EDButtons.setLayoutY(590);
            
            Decr.setOnAction(this);
            Encr.setOnAction(this);
@@ -232,7 +237,7 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
            primaryStage.setTitle("Ciphero");
            primaryStage.setScene(s);
            primaryStage.show();
-           primaryStage.setMinHeight(600);
+           primaryStage.setMinHeight(650);
            primaryStage.setMaxWidth(325);
   //*****************************************************************************         
            
@@ -529,6 +534,10 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
                                     this.b=true;
                                     PutData(1);
                                     RSA.show();
+                                 }else if (r7.isSelected()){
+                                     String filename = FSource.getPath();
+                                     IEF = new IdeaFileEncryption();
+                                  IEF.cryptFile(filename, "Decrypt", keyso.getText(), false);   
                                  }
             } catch (IOException | InterruptedException ex) {
                 Logger.getLogger(ComCipher.class.getName()).log(Level.SEVERE, null, ex);
@@ -590,6 +599,12 @@ import static jdk.nashorn.internal.objects.NativeString.toUpperCase;
                                         PutData(1);
                                         RSA.show();
 
+                                 }else if (r7.isSelected()){
+                                  
+                                  String filename = FSource.getPath();
+                                  IEF = new IdeaFileEncryption();
+                                  //"11001011010110101000100010001011001011010110101000100010001011001011010110101000100010001011001011010110101000100010001011011111"
+                                  IEF.cryptFile(filename, "Encrypt", keyso.getText(), true);
                                  }
                 
             } catch (IOException | InterruptedException ex) {
